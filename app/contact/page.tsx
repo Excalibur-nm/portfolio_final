@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import type { Metadata } from "next";
+import { useState, FormEvent, useRef } from "react";
+import emailjs from '@emailjs/browser';
 
 // Note: metadata must be exported from a server component.
 // We'll handle the form interactivity client-side while
 // keeping the overall structure.
 
 export default function ContactPage() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,18 +16,33 @@ export default function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // Build mailto link
-    const mailtoLink = `mailto:nirmalmanvar7@gmail.com?subject=${encodeURIComponent(
-      formData.subject || "Portfolio Contact"
-    )}&body=${encodeURIComponent(
-      `From: ${formData.name} (${formData.email})\n\n${formData.message}`
-    )}`;
-    window.open(mailtoLink, "_blank");
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    if (!formRef.current) return;
+
+    setIsSubmitting(true);
+
+    try {
+      await emailjs.sendForm(
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID",
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "YOUR_TEMPLATE_ID",
+        formRef.current,
+        {
+          publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY",
+        }
+      );
+      
+      setSubmitted(true);
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+      alert("Failed to send message. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -157,12 +173,12 @@ export default function ContactPage() {
                   check_circle
                 </span>
                 <p className="text-primary font-semibold text-sm">
-                  Email client opened! Thank you for reaching out.
+                  Message sent successfully! Thank you for reaching out.
                 </p>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label
@@ -173,6 +189,7 @@ export default function ContactPage() {
                   </label>
                   <input
                     id="contact-name"
+                    name="name"
                     type="text"
                     required
                     placeholder="Your Name"
@@ -192,6 +209,7 @@ export default function ContactPage() {
                   </label>
                   <input
                     id="contact-email"
+                    name="email"
                     type="email"
                     required
                     placeholder="your@email.com"
@@ -213,6 +231,7 @@ export default function ContactPage() {
                 </label>
                 <input
                   id="contact-subject"
+                  name="subject"
                   type="text"
                   required
                   placeholder="Project Inquiry"
@@ -233,6 +252,7 @@ export default function ContactPage() {
                 </label>
                 <textarea
                   id="contact-message"
+                  name="message"
                   required
                   rows={5}
                   placeholder="Tell me about your project..."
@@ -247,11 +267,12 @@ export default function ContactPage() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full neo-raised text-primary font-bold text-lg py-4 rounded-xl neo-button flex items-center justify-center gap-2 hover:bg-surface-container-high hover:text-tertiary transition-all duration-300"
+                  disabled={isSubmitting}
+                  className="w-full neo-raised text-primary font-bold text-lg py-4 rounded-xl neo-button flex items-center justify-center gap-2 hover:bg-surface-container-high hover:text-tertiary transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   id="contact-submit"
                 >
-                  Send Message
-                  <span className="material-symbols-outlined fill">send</span>
+                  {isSubmitting ? "Sending..." : "Send Message"}
+                  {!isSubmitting && <span className="material-symbols-outlined fill">send</span>}
                 </button>
               </div>
             </form>
