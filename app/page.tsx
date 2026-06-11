@@ -46,13 +46,12 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold text-on-surface tracking-tight leading-tight">
-            Hi, I&apos;m{" "}
+            Hola, I&apos;m{" "}
             <span className="gradient-text">Nirmal</span>
           </h1>
 
           <p className="text-lg md:text-xl text-on-surface-variant max-w-xl leading-relaxed">
-            Full Stack Developer & ML Enthusiast pursuing B.E. in Electronics
-            and Communication Engineering at{" "}
+            Full Stack Developer & ML Enthusiast with a B.E. in E.C Engineering at{" "}
             <span className="text-primary font-medium">
               L.D. College of Engineering
             </span>
